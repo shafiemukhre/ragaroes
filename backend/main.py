@@ -15,6 +15,8 @@ from app.chatbot import chatbot_router
 import uvicorn
 import time
 
+from app.rag_server import load_pdfs
+
 
 # from asgiref.sync import async_to_sync
 # from bugsnag.handlers import BugsnagHandler
@@ -29,6 +31,9 @@ from fastapi.responses import JSONResponse, StreamingResponse
 #     take_all_actions,
 # )
 # from pipeline.config import load_config
+
+
+#TODO: Logging not working
 
 app = FastAPI(
     title="Api Definitions for Question Answering",
@@ -64,6 +69,11 @@ async def add_response_timing_header(request: Request, call_next):
 # patch_openapi(app)
 prefix = "/api/v1"
 # app.include_router(qa_router, prefix=prefix)
+
+
+#NOTE: SETUP
+load_pdfs()
+
 app.include_router(chatbot_router, prefix=prefix)
 # app.include_router(admin_router, prefix=prefix)
 
@@ -129,8 +139,10 @@ async def key_error_handler(request, exc):
 def main():
     # show if there is any python process running bounded to the port
     # ps -fA | grep python
+    
+    load_pdfs()
     logger.info("Start api server")
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8081)
+    uvicorn.run("main:app", host="127.0.0.1", port=8000)
 
 
 if __name__ == "__main__":

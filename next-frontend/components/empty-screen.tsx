@@ -6,16 +6,12 @@ import { IconArrowRight } from '@/components/ui/icons'
 
 const exampleMessages = [
   {
-    heading: 'Explain technical concepts',
-    message: `What is a "serverless function"?`
+    heading: 'Explain SEC Filing',
+    message: `What is "SEC Filling"?`
   },
   {
-    heading: 'Summarize an article',
-    message: 'Summarize the following article for a 2nd grader: \n'
-  },
-  {
-    heading: 'Draft an email',
-    message: `Draft an email to my boss about the following: \n`
+    heading: "What was Meta's revenue in Q4 of 2023?",
+    message: "What was Meta's revenue in Q4 of 2023?"
   }
 ]
 
@@ -24,16 +20,8 @@ export function EmptyScreen({ setInput }: Pick<UseChatHelpers, 'setInput'>) {
     <div className="mx-auto max-w-2xl px-4">
       <div className="rounded-lg border bg-background p-8">
         <h1 className="mb-2 text-lg font-semibold">
-          Welcome to Next.js AI Chatbot!
+          Welcome to your financial assistant
         </h1>
-        <p className="mb-2 leading-normal text-muted-foreground">
-          This is an open source AI chatbot app template built with{' '}
-          <ExternalLink href="https://nextjs.org">Next.js</ExternalLink> and{' '}
-          <ExternalLink href="https://vercel.com/storage/kv">
-            Vercel KV
-          </ExternalLink>
-          .
-        </p>
         <p className="leading-normal text-muted-foreground">
           You can start a conversation here or try the following examples:
         </p>
