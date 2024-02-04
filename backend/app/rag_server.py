@@ -48,7 +48,7 @@ class extract(BaseModel):
     """
     Given the query extrcat the year and quarter of the year
     """
-    year: str = Field("2023",description="The year of the earnings from  year choices: ['2023','2022', '2021', '2020', '2019']")
+    year: str = Field("2023",description="The year of the earnings from  year choices: ['2023','2022', '2021']")
     quater: str = Field("Fourth", description="The quarter of the earnings from quarter choices: ['First', 'Second', 'Third', 'Fourth']")
 
 def extract_year_quater(query):
@@ -72,7 +72,7 @@ cassio.init(
     keyspace=ASTRA_DB_KEYSPACE,
 )
 cassandra_store = CassandraVectorStore(
-    table="All_Stock_Earnings", embedding_dimension=1536
+    table="All_Stock_Earnings500", embedding_dimension=1536
 )
 
 def load_pdfs():
@@ -105,9 +105,9 @@ def get_index(ticker:str, year:str="2021", quarter:str="Second"):
         #TODO: Get relevant from Astra -> Achieved
         md_index = VectorStoreIndex.from_vector_store(vector_store= cassandra_store)
         md_query_engine = md_index.as_query_engine(
-        # filters=MetadataFilters(
-        #     filters=[ExactMatchFilter(key="ticker", value=ticker)]
-        # ),
+        filters=MetadataFilters(
+            filters=[ExactMatchFilter(key="ticker", value=ticker), ExactMatchFilter(key="year", value=year), ExactMatchFilter(key="quarter", value=quarter)]
+        ),
         similarity_top_k=3
     )
         logger.info('engine_pdf')
