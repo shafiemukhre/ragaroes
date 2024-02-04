@@ -4,6 +4,13 @@ from llama_index import (
     StorageContext,
     load_index_from_storage,
 )
+from typing import List
+
+from langchain.output_parsers import PydanticOutputParser
+from langchain.prompts import PromptTemplate
+from langchain_core.pydantic_v1 import BaseModel, Field, validator
+from langchain_openai import ChatOpenAI
+
 import logging
 
 from llama_index.response_synthesizers import (
@@ -21,6 +28,10 @@ from llama_index.agent import ReActAgent
 from llama_index.llms import OpenAI
 
 # from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+from llama_index.llms.openai_utils import to_openai_function
+logger = logging.getLogger(__name__)
+from dotenv import load_dotenv
 import os
 
 
@@ -31,13 +42,34 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ASTRA_DB_ID = os.environ.get("ASTRA_DB_ID")
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
 ASTRA_DB_KEYSPACE = os.environ.get("ASTRA_DB_KEYSPACE")
-tickers = ['META']
+tickers = ["META"]
+class extract(BaseModel):
+    """
+    Given the query extrcat the year and quarter of the year
+    """
+    year: str = Field("2023",description="The year of the earnings from  year choices: ['2023','2022', '2021', '2020', '2019']")
+    quater: str = Field("Fourth", description="The quarter of the earnings from quarter choices: ['First', 'Second', 'Third', 'Fourth']")
+
+def extract_year_quater(query):
+    model = ChatOpenAI(model = "gpt-3.5-turbo-0613")
+    parser = PydanticOutputParser(pydantic_object=extract)
+    prompt = PromptTemplate(
+        template="Extract the year and quarter of the year from the given query.\n{format_instructions}\n{query}\n",
+        input_variables=["query"],
+        partial_variables={"format_instructions": parser.get_format_instructions()},
+    )
+    chain = prompt | model | parser
+
+    resp = chain.invoke({"query": query})
+    print(resp)
+    return resp.year, resp.quater 
+   # Print the response
+
 cassio.init(
     database_id=ASTRA_DB_ID,
     token=ASTRA_DB_APPLICATION_TOKEN,  
     keyspace=ASTRA_DB_KEYSPACE,
 )
-
 cassandra_store = CassandraVectorStore(
     table="All_Stock_Earnings", embedding_dimension=1536
 )
@@ -88,14 +120,16 @@ def load_csv(ticker):
     engine = PandasQueryEngine(df=docs, verbose=True, streaming=True)
     return engine
 
-def get_engine_tools(ticker):
+def get_engine_tools(ticker, year, quarter):
     query_engine_tools = [
         QueryEngineTool(
             query_engine=get_index(ticker),
             metadata=ToolMetadata(
                 name="earnings",
                 description=(
-                    "Provides information about earnings of the company"
+                    "Provides information about earnings report of the company Given the year and quarter and Ticker"
+                    "The engine has these parameters: ticker, year, quarter"
+
                     "Use detailed plain text question as input to the tool."
                 ),
             ),
@@ -113,11 +147,10 @@ def get_engine_tools(ticker):
     ]
     return query_engine_tools
 
-def setup_agent(ticker):
+def setup_agent(ticker, year, quater):
     llm = OpenAI(model="gpt-3.5-turbo-0613")
-
     agent = ReActAgent.from_tools(
-        get_engine_tools(ticker),
+        get_engine_tools(ticker, year, quater),
         llm=llm,
         verbose=True,
         # context=context  
@@ -134,7 +167,8 @@ async def ask_stream_chat(content, ticker_id):
 
 
 def ask_chat(content, ticker_id):
-    agent = setup_agent(ticker_id)
+    year, quater = extract_year_quater(content)
+    agent = setup_agent(ticker_id, year, quater)
     response = agent.chat(content)
     return response
 
