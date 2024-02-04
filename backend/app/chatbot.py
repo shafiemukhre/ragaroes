@@ -19,10 +19,6 @@ chatbot_router = APIRouter(
 #     content:str
 
 
-# class ChatResponse:
-#     def __init__(self, data) -> None:
-#         self.data = data
-
 class Message(BaseModel):
     conversation_id: str = Field(..., description="Unique id of the conversation")
     role: MessageRole = Field(..., description="Author of the chat message")
@@ -56,7 +52,11 @@ async def chat(request: ChatRequest):
     logger.info("Non streaming chat")
     conversation_id = request.conversation_id
     message = ask_chat(request.content, conversation_id)
-    return ChatResponse(data=message)
+    return message
+    # return StreamingResponse(
+    #     ask_chat(request.content, conversation_id),
+    #     media_type='text/event-stream'
+    # )
 
 
 @chatbot_router.post(

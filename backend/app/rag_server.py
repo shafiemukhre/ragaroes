@@ -1,3 +1,4 @@
+import nest_asyncio
 from llama_index import (
     SimpleDirectoryReader,
     VectorStoreIndex,
@@ -159,17 +160,26 @@ def setup_agent(ticker, year, quater):
 
 async def ask_stream_chat(content, ticker_id):
     #TODO: Pending
-    agent = setup_agent(ticker_id)
-    response =  agent.stream_chat(content)
-    for token in response:
-        yield token
+    year, quater = extract_year_quater(content)
+    agent = setup_agent(ticker_id, year, quater)
+    task = agent.create_task(content)
+    response = agent.run_step(task.task_id)
+    # response =  agent.stream_chat(content)
+    # task = response.task_step
+    yield response.output.response
+    while not response.is_last:
+        task = response.next_steps[0]
+        response = agent.run_step(task.task_id)
+        # task = response.task_step
+        yield response.output.response
     # return response
 
 
 def ask_chat(content, ticker_id):
     year, quater = extract_year_quater(content)
     agent = setup_agent(ticker_id, year, quater)
-    response = agent.chat(content)
+    task = agent.create_task(content)
+    response = agent.run_step(task.task_id)
     return response
 
 # #TODO: Make Tickr, year, quarter dynamic

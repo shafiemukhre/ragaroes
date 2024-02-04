@@ -4,3 +4,4 @@ openapi
 llama-index
 python-dotenv
 cassio
+langchain_openai
