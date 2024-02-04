@@ -144,7 +144,7 @@ def main():
     
     # load_pdfs()
     logger.info("Start api server")
-    uvicorn.run("main:app", host="127.0.0.1", port=8000)
+    uvicorn.run("main:app", host="0.0.0.0", port=10000)
 
 
 if __name__ == "__main__":
