@@ -4,3 +4,5 @@
 
 # Ignore venv folder
 venv/
+
+.env
