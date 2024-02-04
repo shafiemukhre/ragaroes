@@ -1,2 +1,9 @@
 .DS_Store
 launch.json
+
+# Remove the .git directory
+
+# Ignore venv folder
+venv/
+
+.env

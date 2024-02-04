@@ -72,7 +72,7 @@ prefix = "/api/v1"
 
 
 #NOTE: SETUP
-load_pdfs()
+# load_pdfs()
 
 app.include_router(chatbot_router, prefix=prefix)
 # app.include_router(admin_router, prefix=prefix)
@@ -140,7 +140,7 @@ def main():
     # show if there is any python process running bounded to the port
     # ps -fA | grep python
     
-    load_pdfs()
+    # load_pdfs()
     logger.info("Start api server")
     uvicorn.run("main:app", host="127.0.0.1", port=8000)
 
