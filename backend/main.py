@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 # from fastapi.openapi.utils import get_openapi
-import logging
 
 from fastapi.exceptions import RequestValidationError, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,11 +10,14 @@ from fastapi.responses import JSONResponse, StreamingResponse
 # from app.routers.qa import qa_router
 # from app.routers.admin import admin_router
 from app.chatbot import chatbot_router
-# from app.utils.log_util import logger
+from app.utils import logger
 import uvicorn
 import time
 
-from app.rag_server import load_pdfs
+from dotenv import load_dotenv
+
+
+# from app.rag_server import load_pdfs
 
 
 # from asgiref.sync import async_to_sync
@@ -54,15 +56,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-logger = logging.getLogger(__name__)
 
-@app.middleware("timing")
-async def add_response_timing_header(request: Request, call_next):
-    start_time = time.time()
-    response = await call_next(request)
-    end_time = time.time()
-    response.headers["X-Response-Time"] = str((end_time - start_time) * 1000)
-    return response
+# @app.middleware("timing")
+# async def add_response_timing_header(request: Request, call_next):
+#     start_time = time.time()
+#     response = await call_next(request)
+#     end_time = time.time()
+#     response.headers["X-Response-Time"] = str((end_time - start_time) * 1000)
+#     return response
 
 
 # Remove 422 error in the api docs
@@ -72,6 +73,7 @@ prefix = "/api/v1"
 
 
 #NOTE: SETUP
+load_dotenv()
 # load_pdfs()
 
 app.include_router(chatbot_router, prefix=prefix)

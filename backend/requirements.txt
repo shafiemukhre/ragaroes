@@ -2,3 +2,5 @@ fastapi
 uvicorn
 openapi
 llama-index
+python-dotenv
+cassio

@@ -6,6 +6,7 @@ from pydantic import Field, BaseModel
 import logging
 from llama_index.llms.base import ChatMessage
 from llama_index.core.llms.types import MessageRole
+from app.utils import logger
 # from app.data.models.mongodb import Message
 
 chatbot_router = APIRouter(
@@ -45,7 +46,6 @@ class ChatResponse(BaseModel):
     data: str = Field(..., description="response from the chatbot")
 
 
-logger = logging.getLogger(__name__)
 
 
 @chatbot_router.post(
@@ -56,7 +56,7 @@ async def chat(request: ChatRequest):
     logger.info("Non streaming chat")
     conversation_id = request.conversation_id
     message = ask_chat(request.content, conversation_id)
-    return ChatResponse(data=message.response)
+    return ChatResponse(data=message)
 
 
 @chatbot_router.post(

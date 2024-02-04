@@ -5,6 +5,7 @@ from llama_index import (
     load_index_from_storage,
 )
 import logging
+
 from llama_index.response_synthesizers import (
     get_response_synthesizer,
     BaseSynthesizer,
@@ -18,13 +19,14 @@ from llama_index.vector_stores import CassandraVectorStore
 from llama_index.vector_stores.types import ExactMatchFilter, MetadataFilters
 from llama_index.agent import ReActAgent
 from llama_index.llms import OpenAI
-import openai
 
-logger = logging.getLogger(__name__)
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 import os
 
-load_dotenv()
+
+from app.utils import logger
+
+# load_dotenv()
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ASTRA_DB_ID = os.environ.get("ASTRA_DB_ID")
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
@@ -51,7 +53,7 @@ def load_pdfs():
         pdf_index.storage_context.persist(persist_dir=f"app/data/storaged/{tick}_index")
 
 
-def get_index(ticker:str, year:str, quarter:str):
+def get_index(ticker:str, year:str="2021", quarter:str="Second"):
     '''
     Retrieves the relevant index from Astra based on the provided ticker, year, and quarter.
 
@@ -70,9 +72,10 @@ def get_index(ticker:str, year:str, quarter:str):
         #TODO: Get relevant from Astra -> Achieved
         md_index = VectorStoreIndex.from_vector_store(vector_store= cassandra_store)
         md_query_engine = md_index.as_query_engine(
-        filters=MetadataFilters(
-            filters=[ExactMatchFilter(key="ticker", value="Meta"), ExactMatchFilter(key="year", value="2021"), ExactMatchFilter(key="quarter", value="Second")]
-        ), similarity_top_k=3
+        # filters=MetadataFilters(
+        #     filters=[ExactMatchFilter(key="ticker", value=ticker)]
+        # ),
+        similarity_top_k=3
     )
         logger.info('engine_pdf')
         return md_query_engine
@@ -81,18 +84,18 @@ def get_index(ticker:str, year:str, quarter:str):
 
 
 def load_csv(ticker):
-    docs = pd.read_csv(f"/Users/parthjain/Desktop/project/ragaroes/Tickers/{ticker}.csv")
-    engine = PandasQueryEngine(df=docs, verbose=True)
+    docs = pd.read_csv(f"app/data/csv/{ticker}.csv")
+    engine = PandasQueryEngine(df=docs, verbose=True, streaming=True)
     return engine
 
 def get_engine_tools(ticker):
     query_engine_tools = [
         QueryEngineTool(
-            query_engine=get_index(ticker, year, quarter),
+            query_engine=get_index(ticker),
             metadata=ToolMetadata(
-                name="pdf",
+                name="earnings",
                 description=(
-                    "Provides information about earnings report of the company Given the year and quarter and Ticker"
+                    "Provides information about earnings of the company"
                     "Use detailed plain text question as input to the tool."
                 ),
             ),
@@ -100,9 +103,9 @@ def get_engine_tools(ticker):
         QueryEngineTool(
             query_engine=load_csv(ticker),
             metadata=ToolMetadata(
-                name="csv",
+                name="stocks",
                 description=(
-                    "Provides information about stockprices of the company "
+                    "Provides information about stockprices of the company. The csv is already loaded in dataframe."
                     "Use a detailed plain text question as input to the tool."
                 ),
             ),
@@ -121,11 +124,13 @@ def setup_agent(ticker):
     )
     return agent
 
-def ask_stream_chat(content, ticker_id):
+async def ask_stream_chat(content, ticker_id):
     #TODO: Pending
     agent = setup_agent(ticker_id)
-    response = agent.chat(content)
-    return response
+    response =  agent.stream_chat(content)
+    for token in response:
+        yield token
+    # return response
 
 
 def ask_chat(content, ticker_id):
@@ -133,9 +138,9 @@ def ask_chat(content, ticker_id):
     response = agent.chat(content)
     return response
 
-#TODO: Make Tickr, year, quarter dynamic
-def main():
-    ask_chat('What is the quaterly earning of Meta in year 2021 and quater 2', 'META')
+# #TODO: Make Tickr, year, quarter dynamic
+# def main():
+#     ask_chat('What is the quaterly earning of Meta in year 2021 and quater 2', 'META')
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
