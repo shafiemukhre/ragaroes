@@ -1,1 +1,6 @@
 .DS_Store
+
+# Remove the .git directory
+
+# Ignore venv folder
+venv/
