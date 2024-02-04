@@ -38,7 +38,7 @@ import os
 
 from app.utils import logger
 
-# load_dotenv()
+load_dotenv()
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 ASTRA_DB_ID = os.environ.get("ASTRA_DB_ID")
 ASTRA_DB_APPLICATION_TOKEN = os.environ.get("ASTRA_DB_APPLICATION_TOKEN")
@@ -71,9 +71,7 @@ cassio.init(
     token=ASTRA_DB_APPLICATION_TOKEN,  
     keyspace=ASTRA_DB_KEYSPACE,
 )
-cassandra_store = CassandraVectorStore(
-    table="All_Stock_Earnings500", embedding_dimension=1536
-)
+cassandra_store = CassandraVectorStore(table="All_Stock_Earnings500", embedding_dimension=1536)
 
 def load_pdfs():
     for tick in tickers:
@@ -85,6 +83,14 @@ def load_pdfs():
         pdf_index = VectorStoreIndex.from_documents(docs)
         pdf_index.storage_context.persist(persist_dir=f"app/data/storaged/{tick}_index")
 
+
+def get_pdf_index(ticker):
+    storage_context = StorageContext.from_defaults(
+        persist_dir="app/data/storaged/{ticker}_index"
+    )
+    index = load_index_from_storage(storage_context)
+    engine = index.as_query_engine(similarity_top_k=3)
+    return engine
 
 def get_index(ticker:str, year:str="2021", quarter:str="Second"):
     '''
@@ -102,7 +108,6 @@ def get_index(ticker:str, year:str="2021", quarter:str="Second"):
         Exception: If the index is not found.
     '''
     try:
-        #TODO: Get relevant from Astra -> Achieved
         md_index = VectorStoreIndex.from_vector_store(vector_store= cassandra_store)
         md_query_engine = md_index.as_query_engine(
         filters=MetadataFilters(
@@ -114,6 +119,7 @@ def get_index(ticker:str, year:str="2021", quarter:str="Second"):
         return md_query_engine
     except:
         logger.error(f'Index not found')
+
 
 
 def load_csv(ticker):
@@ -177,7 +183,7 @@ async def ask_stream_chat(content, ticker_id):
 
 def ask_chat(content, ticker_id):
     year, quater = extract_year_quater(content)
-    agent = setup_agent(ticker_id, year, quater)
+    agent = setup_agent(ticker_id)
     task = agent.create_task(content)
     response = agent.run_step(task.task_id)
     return response
