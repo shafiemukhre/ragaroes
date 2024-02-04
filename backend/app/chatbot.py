@@ -56,7 +56,7 @@ async def chat(request: ChatRequest):
     logger.info("Non streaming chat")
     conversation_id = request.conversation_id
     message = ask_chat(request.content, conversation_id)
-    return ChatResponse(data=message)
+    return ChatResponse(data=message.response)
 
 
 @chatbot_router.post(
@@ -64,6 +64,8 @@ async def chat(request: ChatRequest):
     description="Chat with the ai bot in a streaming way."
 )
 async def streaming_chat(request: ChatRequest):
+    
+    #TODO: Pending
     logger.info("streaming chat")
     conversation_id = request.conversation_id
     return StreamingResponse(
