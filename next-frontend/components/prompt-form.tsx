@@ -11,12 +11,29 @@ import {
 } from '@/components/ui/tooltip'
 import { IconArrowElbow, IconPlus } from '@/components/ui/icons'
 import { useRouter } from 'next/navigation'
+import useSWR from 'swr'
+import useRagContext from '@/lib/hooks/use-rag-context'
 
 export interface PromptProps
   extends Pick<UseChatHelpers, 'input' | 'setInput'> {
   onSubmit: (value: string) => void
   isLoading: boolean
 }
+
+// const fetcher = (...args) => fetch(...args).then(res => res.json())
+
+// function getRagContext() {
+//   const { data, error } = useSWR(
+//     'https://ragaroes-api.onrender.com/api/v1/chat/non-streaming',
+//     fetcher
+//   )
+
+//   if (error) return <div>Failed to load</div>
+//   if (!data) return <div>Loading...</div>
+
+//   console.log(data)
+//   return data.content
+// }
 
 export function PromptForm({
   onSubmit,
@@ -32,6 +49,9 @@ export function PromptForm({
       inputRef.current.focus()
     }
   }, [])
+
+  // console.log('getRagContext', getRagContext())
+  console.log('useRagContext ->', useRagContext())
 
   return (
     <form
